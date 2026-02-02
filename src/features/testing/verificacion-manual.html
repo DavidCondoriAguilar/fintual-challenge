@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación Manual - API Fintual</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .fondo { border: 1px solid #ddd; margin: 10px 0; padding: 15px; }
+        .positivo { color: green; }
+        .negativo { color: red; }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Verificación Manual - API Fintual</h1>
+    <p>Esta página te permite verificar manualmente los datos que consume la app Angular</p>
+    
+    <button onclick="cargarTodosLosFondos()">🔄 Cargar Todos los Fondos</button>
+    <button onclick="mostrarCalculoEjemplo()">🧮 Ver Ejemplo Cálculo</button>
+    <button onclick="limpiar()">🗑️ Limpiar</button>
+    
+    <div id="resultados"></div>
+
+    <script>
+        const fondos = {
+            186: 'Fondo Conservador',
+            187: 'Fondo Moderado',
+            188: 'Fondo Agresivo',
+            189: 'Fondo Crecimiento'
+        };
+
+        async function cargarFondo(id) {
+            try {
+                const response = await fetch(`https://fintual.cl/api/real_assets/${id}/days`);
+                const data = await response.json();
+                
+                if (!data.data || data.data.length === 0) {
+                    throw new Error('No hay datos disponibles');
+                }
+
+                // Agrupar por mes y calcular variaciones
+                const meses = {};
+                data.data.forEach(dia => {
+                    const fecha = new Date(dia.date);
+                    const claveMes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (!meses[claveMes]) {
+                        meses[claveMes] = [];
+                    }
+                    meses[claveMes].push(dia);
+                });
+
+                // Calcular variaciones mensuales
+                const variaciones = [];
+                Object.keys(meses).sort().forEach(mes => {
+                    const datosMes = meses[mes].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const primerDia = datosMes[0];
+                    const ultimoDia = datosMes[datosMes.length - 1];
+                    
+                    // FÓRMULA CORRECTA: ((precio_fin - precio_inicio) / precio_inicio) * 100
+                    const variacion = ((ultimoDia.price - primerDia.price) / primerDia.price) * 100;
+                    
+                    variaciones.push({
+                        mes: mes,
+                        primerPrecio: primerDia.price,
+                        ultimoPrecio: ultimoDia.price,
+                        variacion: variacion
+                    });
+                });
+
+                // Mostrar resultados
+                mostrarResultadosFondo(id, fondos[id], variaciones, data.data.length);
+                
+            } catch (error) {
+                document.getElementById('resultados').innerHTML += 
+                    `<div class="fondo">❌ Error cargando fondo ${id}: ${error.message}</div>`;
+            }
+        }
+
+        function mostrarResultadosFondo(id, nombre, variaciones, totalRegistros) {
+            const html = `
+                <div class="fondo">
+                    <h3>📊 ${nombre} (ID: ${id})</h3>
+                    <p><strong>Total registros:</strong> ${totalRegistros}</p>
+                    <p><strong>Meses calculados:</strong> ${variaciones.length}</p>
+                    
+                    <table>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Precio Inicio</th>
+                            <th>Precio Fin</th>
+                            <th>Variación %</th>
+                        </tr>
+                        ${variaciones.slice(-6).reverse().map(v => `
+                            <tr>
+                                <td>${v.mes}</td>
+                                <td>${v.primerPrecio.toFixed(2)}</td>
+                                <td>${v.ultimoPrecio.toFixed(2)}</td>
+                                <td class="${v.variacion >= 0 ? 'positivo' : 'negativo'}">
+                                    ${v.variacion >= 0 ? '+' : ''}${v.variacion.toFixed(2)}%
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    
+                    <p><strong>Última variación:</strong> 
+                       <span class="${variaciones[variaciones.length - 1]?.variacion >= 0 ? 'positivo' : 'negativo'}">
+                           ${variaciones[variaciones.length - 1]?.variacion >= 0 ? '+' : ''}${variaciones[variaciones.length - 1]?.variacion?.toFixed(2)}%
+                       </span>
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('resultados').innerHTML += html;
+        }
+
+        function cargarTodosLosFondos() {
+            document.getElementById('resultados').innerHTML = '<h2>🔄 Cargando datos...</h2>';
+            
+            Object.keys(fondos).forEach(id => {
+                setTimeout(() => cargarFondo(id), parseInt(id) * 200); // Delay para no sobrecargar API
+            });
+        }
+
+        function mostrarCalculoEjemplo() {
+            const precioInicio = 1000;
+            const precioFin = 1050;
+            const variacion = ((precioFin - precioInicio) / precioInicio) * 100;
+            
+            document.getElementById('resultados').innerHTML = `
+                <div class="fondo">
+                    <h3>🧮 Ejemplo Cálculo Manual</h3>
+                    <p><strong>Fórmula:</strong> ((precio_fin - precio_inicio) / precio_inicio) * 100</p>
+                    <p><strong>Precio inicio mes:</strong> $${precioInicio}</p>
+                    <p><strong>Precio fin mes:</strong> $${precioFin}</p>
+                    <p><strong>Cálculo:</strong> ((${precioFin} - ${precioInicio}) / ${precioInicio}) * 100</p>
+                    <p><strong>Resultado:</strong> <span class="positivo">${variacion.toFixed(2)}%</span></p>
+                    <p><strong>Verificación:</strong> ${precioFin} es ${variacion.toFixed(2)}% más alto que ${precioInicio}</p>
+                </div>
+            `;
+        }
+
+        function limpiar() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+
+        // Cargar automáticamente al inicio
+        window.onload = function() {
+            console.log('🚀 Página de verificación lista');
+            console.log('Usa los botones para probar los datos manualmente');
+        };
+    </script>
+</body>
+</html>

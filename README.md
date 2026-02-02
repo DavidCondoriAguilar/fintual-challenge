@@ -1,59 +1,30 @@
-# FintualChallenge
+# Fintual Challenge - Análisis de Fondos
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.2.
+Aplicación Angular para calcular y visualizar la variación mensual de fondos de inversión usando la API oficial de Fintual.
 
-## Development server
+## 📁 Estructura del Proyecto
 
-To start a local development server, run:
+- `src/core/`: **Lógica de Negocio**. Incluye modelos (`models`), gestión de API (`fintual.service`) y cálculos de variación (`financial.service`).
+- `src/features/`: **Vistas**. El `dashboard` es el componente principal que orquesta la UI.
+- `src/core/utils/`: **Funciones puras**. Transformación de fechas y agrupación de datos.
 
-```bash
-ng serve
-```
+## ⚙️ Flujo de Datos
+1. **Fetch**: Se obtienen precios diarios de la API (IDs: 186, 187, 188, 15077).
+2. **Proceso**: Se agrupan por mes y se calcula la variación: `((Precio Final - Precio Inicial) / Precio Inicial) * 100`.
+3. **Estado**: Se usa **Angular Signals** para manejar el estado (loading, data, error) de forma reactiva y eficiente.
+4. **UI**: Visualización dinámica con Chart.js y filtros en tiempo real por fondo y fecha.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 🧪 Estrategia de Testing y Validación
+- **Manejo de Errores**: Sistema robusto para capturar fallos de API (404, 500) y mostrar alertas al usuario.
+- **Validación de Datos**: Filtros automáticos que eliminan registros incompletos para asegurar cálculos precisos.
+- **Logs de Consola**: Implementación de trazas detalladas para debuggear el flujo de datos desde la respuesta JSON hasta el renderizado del gráfico.
 
-## Code scaffolding
+## 📊 SQL Query (Resumen)
+*Las consultas completas están en `queries.sql`.*
+- **Top Inversor**: `JOIN` entre `user_data` y `user_movements` filtrado por `subscription`, agrupado y ordenado por conteo.
+- **Totales**: Uso de `SUM()` y `GROUP BY` sobre el tipo de movimiento.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## 🚀 Ejecución
+1. `npm install`
+2. `ng serve`
+3. Abrir `http://localhost:4200`
