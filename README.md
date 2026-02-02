@@ -8,11 +8,16 @@ Aplicación Angular para calcular y visualizar la variación mensual de fondos d
 - `src/features/`: **Vistas**. El `dashboard` es el componente principal que orquesta la UI.
 - `src/core/utils/`: **Funciones puras**. Transformación de fechas y agrupación de datos.
 
-## ⚙️ Flujo de Datos
-1. **Fetch**: Se obtienen precios diarios de la API (IDs: 186, 187, 188, 15077).
-2. **Proceso**: Se agrupan por mes y se calcula la variación: `((Precio Final - Precio Inicial) / Precio Inicial) * 100`.
-3. **Estado**: Se usa **Angular Signals** para manejar el estado (loading, data, error) de forma reactiva y eficiente.
-4. **UI**: Visualización dinámica con Chart.js y filtros en tiempo real por fondo y fecha.
+## ⚙️ Flujo de Datos y Fondos
+1. **Selección de Fondos**: Se manejan 4 perfiles de riesgo mapeados a IDs reales de la API (Series A):
+   - **186**: Agresivo (Norris)
+   - **187**: Moderado (Pit)
+   - **188**: Conservador (Clooney)
+   - **15077**: Muy Conservador (Streep)
+2. **Fetch**: Al cambiar el fondo, se dispara una petición a `real_assets/{id}/days`.
+3. **Proceso**: Se agrupan precios diarios por mes y se calcula la variación: `((Precio Final - Precio Inicial) / Precio Inicial) * 100`.
+4. **Estado**: Se usa **Angular Signals** para manejar el estado (loading, data, error) de forma reactiva.
+5. **UI**: Renderizado dinámico con Chart.js según el fondo y rango de fechas seleccionado.
 
 ## 🧪 Estrategia de Testing y Validación
 - **Manejo de Errores**: Sistema robusto para capturar fallos de API (404, 500) y mostrar alertas al usuario.
